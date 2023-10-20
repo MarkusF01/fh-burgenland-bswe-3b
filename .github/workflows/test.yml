@@ -1,0 +1,47 @@
+name: Test CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Set up JDK 20
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-version: '20'
+
+    # Cache dependencies for faster subsequent runs
+    - name: Cache Gradle packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.gradle/chaches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle*') }}
+        restore-keys: ${{ runner.os }}-gradle
+
+    # Run unit tests
+    - name: Run Tests
+      run: ./gradlew test
+
+    # Build the application
+    - name: Build bootJar
+      run: ./gradlew bootJar
+
+    # Upload artifact
+    - name: Upload JAR
+      uses: actions/upload-artifact@v2
+      with:
+        name: app-jar
+        path: build/libs/*.jar
